@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, defineAsyncComponent } from 'vue';
-import {} from 'vue';
+import { computed, ref } from 'vue';
 import { useDark } from '@vueuse/core';
-// reduce bundle size by using defineAsyncComponent
-const VueDatePicker = defineAsyncComponent(() => import('@vuepic/vue-datepicker'));
+import { frCH } from "date-fns/locale"
+import { VueDatePicker } from '@vuepic/vue-datepicker';
 
 import '@vuepic/vue-datepicker/dist/main.css';
 
@@ -34,9 +33,6 @@ const props = defineProps({
 // disable past dates
 const minDate = ref(new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000));
 
-// user's timezone
-const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
 const emit = defineEmits(['update:modelValue']);
 
 const value = computed({
@@ -50,12 +46,12 @@ const value = computed({
     v-model="value"
     auto-apply
     :dark="isDark"
-    :timezone="timezone"
+    timezone="utc"
     :min-date="minDate"
-    :enable-time-picker="false"
+    :time-config="{ enableTimePicker: false }"
     :clearable="false"
     position="left"
-    locale="fr"
+    :locale="frCH"
     format="dd/MM/yyyy"
   >
     <template #dp-input="{ value, onInput }">

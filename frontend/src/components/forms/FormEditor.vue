@@ -48,6 +48,7 @@ const editor = useEditor({
       history: false,
       paragraph: false,
       bold: false,
+      underline: false,
       orderedList: false,
       bulletList: false
     }),

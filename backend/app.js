@@ -6,7 +6,8 @@ const cookieParser = require('cookie-parser');
 // Load env vars
 process.loadEnvFile('./.env');
 
-const { sequelize: db } = require('./config/database');
+// For mongoose
+const { connectMongoose, disconnectDB } = require('./config/database');
 const { initModels } = require('./models');
 const router = require('./routes');
 
@@ -54,14 +55,13 @@ async function initApp(options = {}) {
 
   const theApp = createApp();
 
-  await db.authenticate();
+  // Connect to MongoDB
+  await connectMongoose();
 
   // Initialize all models & expose to controllers
-  const models = initModels(db);
+  const models = initModels();
   theApp.locals.models = models;
 
-  // Sync schema (or run migrations if you prefer)
-  await db.sync();
 
   if (listen) {
     server = theApp.listen(port, () => {
@@ -69,7 +69,7 @@ async function initApp(options = {}) {
     });
   }
 
-  return { app: theApp, server, db };
+  return { app: theApp, server };
 }
 
 /** Gracefully stop the server (useful in tests) */
@@ -78,6 +78,8 @@ async function stopApp() {
     await new Promise((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
     server = undefined;
   }
+  // Disconnect MongoDB
+  await disconnectDB();
 }
 
 module.exports = { createApp, initApp, stopApp };

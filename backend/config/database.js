@@ -1,42 +1,31 @@
-const { Sequelize } = require('sequelize');
+// Set up mongoose connection
+const mongoose = require("mongoose");
 
-const isTest = process.env.NODE_ENV === 'test';
+const mongoDB = process.env.MONGODB_URI;
 
-let sequelize;
-if (isTest) {
-  // Fast, zero-setup DB for tests
-  sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: ':memory:',
-    logging: false
+async function connectMongoose() {
+  await mongoose.connect(mongoDB);
+  console.log("MongoDB connection successful : ", mongoDB);
+
+  mongoose.connection.on("error", (err) => {
+    console.error("MongoDB connection error:", err);
   });
-} else {
-  if (!process.env.DB_URL) {
-    throw new Error('Missing DB_URL environment variable');
-  }
-  sequelize = new Sequelize(process.env.DB_URL, {
-    dialect: 'mysql', // Assurez-vous que le dialecte est correct
-    logging: false,
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    },
-    // don't add the timestamp attributes (updatedAt, createdAt)
-    define: {
-      timestamps: false
-    },
-    // The retry config if Deadlock Happened
-    retry: {
-      match: [/Deadlock/i],
-      max: 3, // Maximum retry 3 times
-      backoffBase: 1000, // Initial backoff duration in ms. Default: 100,
-      backoffExponent: 1.5 // Exponent to increase backoff each try. Default: 1.1
-    }
+
+  mongoose.connection.on("disconnected", () => {
+    console.warn("MongoDB disconnected");
   });
 }
 
-module.exports = {
-  sequelize
-};
+async function disconnectDB() {
+  await mongoose.disconnect();
+  console.log("MongoDB connection closed");
+}
+
+try {
+  connectMongoose();
+} catch (err) {
+  console.error("Failed to connect to MongoDB:", err);
+  process.exit(1);
+}
+
+module.exports = { connectMongoose, disconnectDB };
